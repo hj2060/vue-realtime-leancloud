@@ -1,0 +1,36 @@
+@import './cover.scss';
+@import './im.scss';
+html,body{
+  padding: 0;
+  margin: 0;
+}
+*{
+  box-sizing: border-box;
+}
+.container{
+  min-width: 1000px;
+  max-width: 1400px;
+  margin: auto;
+}
+.panel{
+  border-radius: 2px;
+  padding:10px 20px;
+  background: white;
+}
+[contenteditable=true]:empty:before {
+  content: attr(placeholder);
+}
+.up-enter-active,.up-leave {
+  opacity: 1;
+  transition: .2s;
+  transform: translate3d(0,0,0);
+}
+.up-leave-active{
+  opacity: 0;
+  transform: translate3d(0, 20px, 0);
+  transition: .2s;
+}
+.up-enter {
+  opacity: 0;
+  transform: translate3d(0, 20px, 0);
+}

@@ -1,0 +1,12 @@
+.el-menu-item{
+  color:#3d3d3d !important;
+}
+.el-menu-item.is-active{
+  color:rgb(0, 164, 236) !important;
+}
+.message-list .vue-recycle-scroller__item-wrapper {
+  margin:20px 0;
+}
+.vue-recycle-scroller.ready .vue-recycle-scroller__item-view{
+  will-change: auto !important;
+}

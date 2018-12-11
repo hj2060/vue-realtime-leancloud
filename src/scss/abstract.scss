@@ -1,0 +1,8 @@
+@mixin scale($numbr:1) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  display: -webkit-box;
+  -webkit-line-clamp: $numbr;
+  -webkit-box-orient: vertical;
+}
