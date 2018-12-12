@@ -1,8 +1,8 @@
 <template>
   <div class="user-list">
-    <div class="self">
-      <img :src="user.avatar" alt="" class="avatar">
-      <span>{{user.name}}</span>
+    <div class="self" v-if="$im.user">
+      <img :src="$im.user.avatar" alt="" class="avatar">
+      <span>{{$im.user.name}}</span>
     </div>
     <div class="search">
       <el-input placeholder="搜索" size="mini" v-model="searchText">
@@ -12,45 +12,55 @@
         </i>
       </el-input>
     </div>
-    <RecycleScroller
-      class="user-lists"
-      :items="userList"
-      :prerender="10"
-      :item-height="75"
-      key-field="name"
-    >
+    <div class="user-lists">
       <div class="item" 
-        :class="{active: active === index}" slot-scope="{item, index}" 
+        :class="{active: $im.selectIndex === index}" 
+        v-for="(item, index) in showList($im.userList)"
+        :key="item.objectId"
         v-if="item.name.toLowerCase().includes(searchText.toLowerCase())"
         @click="selectUser(index)">
         <div class="avatar">
+          <span class="bage" v-if="item.unread"></span>
           <img :src="item.avatar" alt="">
         </div>
         <div class="user-info-content">
           <div class="info">
             <span>{{item.name}}</span>
-            <span>15:16</span>
+            <span>{{item.messages | lastInfo('date')}}</span>
           </div>
-          <div class="msg">
-            昨天我去了那里
+          <div class="msg" v-html="item.messages.length ? item.messages[item.messages.length-1].message : ''">
           </div>
         </div>
       </div>
-    </RecycleScroller>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
+import {Observer} from 'mobx-vue'
+import IM from './im-store'
 import { Component, Vue, Prop, Watch} from 'vue-property-decorator'
-@Component
+@Observer
+@Component<List>({
+  filters: {
+    lastInfo(v: any[], key: string) {
+      if (v.length) {
+        return v[v.length - 1][key]
+      }
+      return ''
+    }
+  }
+})
 export default class List extends Vue {
-  @Prop({default: []}) userList!: any[]
-  @Prop() user: any
+  $im = IM
   searchText = ''
-  active: null | number = null
   selectUser(i: number) {
-    this.active = i
-    this.$emit('select', i)
+    this.$im.setIndex(i)
+  }
+  showList(v: any[]) {
+    return this.$im.userList.filter(u => {
+      return u.name.includes(this.searchText)
+    })
   }
 }
 </script>
@@ -86,6 +96,16 @@ export default class List extends Vue {
   height:calc(100% - 60px);
   overflow-y: auto;
   .item{
+    .bage{
+      position: absolute;
+      display: block;
+      width:10px;
+      height:10px;
+      border-radius: 50%;
+      right: -5px;
+      top:-5px;
+      background: #F56C6C;
+    }
     display: flex;
     align-items: center;
     height:75px;
@@ -97,6 +117,7 @@ export default class List extends Vue {
       background: #F2F6FC;
     }
     .avatar{
+      position: relative;
       width:40px;
       height:40px;
       margin-right: 10px;

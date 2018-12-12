@@ -10,9 +10,12 @@
   },
   "dependencies": {
     "axios": "^0.18.0",
+    "dayjs": "^1.7.7",
     "element-ui": "^2.4.5",
     "leancloud-realtime": "^4.2.1",
     "leancloud-storage": "^3.11.0",
+    "mobx": "^5.7.0",
+    "mobx-vue": "^2.0.8",
     "vue": "^2.5.17",
     "vue-class-component": "^6.0.0",
     "vue-property-decorator": "^7.0.0",

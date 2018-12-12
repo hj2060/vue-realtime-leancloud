@@ -1,43 +1,27 @@
 <template>
   <div class="message-panel">
-    <header class="md-header">
-      <img :src="dialogist.avatar" alt="" class="avatar" v-if="dialogist.avatar">
-      <span class="name">{{dialogist.name}}</span>
+    <header class="md-header" v-if="$im.currentUser">
+      <img :src="$im.currentUser.avatar" alt="" class="avatar">
+      <span class="name">{{$im.currentUser.name}}</span>
       <span class="icon"></span>
     </header>
-    <span class="nomore" v-if="!dialogist.name">未选择对话</span>
-    <DynamicScroller
-      :items="messages"
-      :min-item-height="54"
-      ref="list"
-      class="message-list"
-      v-if="dialogist.name"
-    >
-      <template slot-scope="{ item, index, active }" >
-        <DynamicScrollerItem
-          :item="item"
-          :active="active"
-          key-field="id"
-          :size-dependencies="[
-            item.message
-          ]"
-          :data-index="index"
-        >
-          <div class="md-message me" v-if="item.self">
-            <div class="info">
-              <span class="text" v-html="item.message"></span>
-            </div>
-            <img class="avatar" :src="item.avatar" alt="">
+    <span class="nomore" v-if="!$im.currentUser">未选择对话</span>
+    <div class="message-list" ref="list">
+      <div>
+        <div class="md-message me" v-if="item.objectId === $im.user.objectId" v-for="item in $im.currentMessages" :key="item.id">
+          <div class="info">
+            <span class="text" v-html="item.message"></span>
           </div>
-          <div class="md-message other" v-else>
-            <img class="avatar" :src="item.avatar" alt="">
-            <div class="info">
-              <span class="text" v-html="item.message"></span>
-            </div>
+          <img class="avatar" :src="$im.user.avatar" alt="">
+        </div>
+        <div class="md-message other" v-else>
+          <img class="avatar" :src="$im.currentUser.avatar" alt="">
+          <div class="info">
+            <span class="text" v-html="item.message"></span>
           </div>
-        </DynamicScrollerItem>
-      </template>
-    </DynamicScroller>
+        </div>
+      </div>
+    </div>
     <!-- <div class="message-list">
       <span class="nomore">暂时没有更多消息</span>
       <div class="message other" v-for="n in 2">
@@ -57,7 +41,7 @@
         <img class="avatar" src="https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxgeticon?seq=633027519&username=@037165b685419f2069ffcefce78261757503237e8e69a607570cafbe882a0798&skey=@crypt_c319d90c_0a2a2fba7c46e13e9f8b0cd1b5b79778" alt="">
       </div>
     </div>-->
-    <div class="input-panel" v-if="dialogist.name">
+    <div class="input-panel" v-if="$im.currentUser">
       <div class="tool-list">
         <div>
           <Icon name="emoji" :size="25" @click="openEmoji = true"></Icon>
@@ -73,7 +57,7 @@
       </div>
       <div class="md-footer">
         <span>按下Cmd+Enter换行</span>
-        <button @click="messages = []">发送</button>
+        <button>发送</button>
       </div>
     </div>
   </div>
@@ -82,53 +66,28 @@
 <script lang="ts">
 import Emoji from './emoji.vue'
 import { Component, Vue, Prop, Watch } from 'vue-property-decorator'
+import {Observer} from 'mobx-vue'
+import IM from './im-store'
+@Observer
 @Component({
   components: {
     Emoji
   }
 })
 export default class Home extends Vue {
+  $im = IM
   msg = ''
-  @Prop() dialogist!: any
   messageElement!: HTMLElement
   messageList!: HTMLElement
   openEmoji = false
-  messages = [
-    // {
-    //   id: 1,
-    //   userid: 1,
-    //   avatar: 'https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxgeticon?seq=633027519&username=@037165b685419f2069ffcefce78261757503237e8e69a607570cafbe882a0798&skey=@crypt_c319d90c_0a2a2fba7c46e13e9f8b0cd1b5b79778',
-    //   message: '我来啦水电费吉计算两点缴费来得及法律<img class="input-emoji" src="https://wx.qq.com/zh_CN/htmledition/v2/images/spacer.gif"></img>酸辣粉机水立方',
-    //   self: true
-    // },
-    // {
-    //   id: 2,
-    //   userid: 2,
-    //   avatar: 'https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxgeticon?seq=677838611&username=@bd8b0fef612a56a24667f7140aaa61c1&skey=@crypt_c319d90c_e55d04993c14127254af11f989fdae53',
-    //   message: '我来啦水电费吉计算两点缴费来得及法律<img class="input-emoji" src="https://wx.qq.com/zh_CN/htmledition/v2/images/spacer.gif"></img>酸辣粉机水立方',
-    //   self: false
-    // },
-    // {
-    //   id: 3,
-    //   userid: 1,
-    //   avatar: 'https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxgeticon?seq=633027519&username=@037165b685419f2069ffcefce78261757503237e8e69a607570cafbe882a0798&skey=@crypt_c319d90c_0a2a2fba7c46e13e9f8b0cd1b5b79778',
-    //   message: '我来啦水电费吉计算两点缴费来得及法律<img class="input-emoji" src="https://wx.qq.com/zh_CN/htmledition/v2/images/spacer.gif"></img>酸辣粉机水立方',
-    //   self: true
-    // },
-    // {
-    //   id: 4,
-    //   userid: 2,
-    //   avatar: 'https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxgeticon?seq=677838611&username=@bd8b0fef612a56a24667f7140aaa61c1&skey=@crypt_c319d90c_e55d04993c14127254af11f989fdae53',
-    //   message: '我来啦水电费吉计算两点缴费来得及法律<img class="input-emoji" src="https://wx.qq.com/zh_CN/htmledition/v2/images/spacer.gif"></img>酸辣粉机水立方收到了废旧塑料父级是老大解放路口是就胜利大街法律手段就发了看',
-    //   self: false
-    // }
-  ]
   range!: Range
   private xhs(s: string) {
     return s.replace(/(<script>|<\/script>)/g, '')
   }
   private editBlur() {
-    this.range = window.getSelection().getRangeAt(0)
+    if (window.getSelection()) {
+      this.range = window.getSelection().getRangeAt(0)
+    }
   }
   private selectEmoji(item: {title: string, class: string}) {
     setTimeout(() => {
@@ -139,7 +98,7 @@ export default class Home extends Vue {
   // 向指定光标位置插入html内容
   private insertHtml(html: string) {
     if (!this.range) {
-      this.messageElement.innerHTML += html
+      (this.$refs.message as HTMLElement).innerHTML += html
       return
     }
     let sel = window.getSelection();
@@ -160,43 +119,40 @@ export default class Home extends Vue {
       sel.addRange(contentRange);             //添加修改后的选区
     }
   }
-  private enter(e: KeyboardEvent) {
+  enter(e: KeyboardEvent) {
     if (!e.shiftKey) {
       e.preventDefault()
-      const message = this.messageElement.innerHTML
+      const message = (this.$refs.message as HTMLElement).innerHTML
       if (message) {
         this.send(message)
       }
     }
   }
   clear() {
-    this.msg = ''
-    this.messageElement.innerHTML = ' ';
+    this.msg = '';
+    (this.$refs.message as HTMLElement).innerHTML = ' ';
   }
-  // 发送
-  private send(message: string) {
+  send(message: string) {
     // const id = this.messages.length ? this.messages[this.messages.length - 1].id + 1 : 1
-    const match = message.match(/<img (\s.)+? title="(.+)"><\/img>/g)
-    // 匹配用于发送
-    const formate = message.replace(/<img .+?>/g, ($m) => {
-      const res = $m.match(/title="(.+?)"/)
-      return `[${res![1]}]`
-    })
-    // this.messages.push({
-    //   id, userid: 1,
-    //   avatar: 'https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxgeticon?seq=633027519&username=@037165b685419f2069ffcefce78261757503237e8e69a607570cafbe882a0798&skey=@crypt_c319d90c_0a2a2fba7c46e13e9f8b0cd1b5b79778',
-    //   message: message,
-    //   self: true
+    // const match = message.match(/<img (\s.)+? title="(.+)"><\/img>/g)
+    // // 匹配用于发送
+    // const formate = message.replace(/<img .+?>/g, ($m) => {
+    //   const res = $m.match(/title="(.+?)"/)
+    //   return `[${res![1]}]`
     // })
     this.clear();
-    (this.$refs.list as Vue).$nextTick(() => {
-      setTimeout(() => {
-        this.messageList.scrollTop = this.messageList.children[0].clientHeight                
-      })
-    })
+    this.$im.send(message)
   }
   mounted() {
     // firefox
+    this.$im.bindPushEvnet(() => {
+      const list = (this.$refs.list as HTMLElement)
+      if (list.children.length) {
+        setTimeout(() => {
+          list.scrollTop = list.children[0].clientHeight          
+        })
+      }
+    })
     document.execCommand('defaultParagraphSeparator', false, 'br')
   }
 }

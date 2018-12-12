@@ -4,7 +4,7 @@ const $http = axios.create({
   headers: {
     'Content-type': 'application/json',
     'X-LC-Id': process.env.VUE_APP_APPID,
-    'X-LC-Key': `${process.env.VUE_APP_MASTERKEY},master`
+    'X-LC-Key': `${process.env.VUE_APP_APPKEY}`
   }
 })
 export default {

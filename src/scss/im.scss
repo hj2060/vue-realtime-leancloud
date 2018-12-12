@@ -1,3 +1,7 @@
+[contenteditable] {
+  -webkit-user-select: auto;
+  user-select: all;
+}
 input[name=picture]{
   position: absolute;
   width:100%;
@@ -40,7 +44,7 @@ input[name=picture]{
     }
   }
   .info{
-    padding:8px 10px;
+    padding:9px 10px;
     border-radius: 4px;
     position: relative;
     &:before{
