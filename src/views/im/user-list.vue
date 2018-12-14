@@ -28,7 +28,8 @@
             <span>{{item.name}}</span>
             <span>{{item.messages | lastInfo('date')}}</span>
           </div>
-          <div class="msg" v-html="item.messages.length ? item.messages[item.messages.length-1].message : ''">
+          <div class="msg">
+            {{item.lastMessage}}
           </div>
         </div>
       </div>

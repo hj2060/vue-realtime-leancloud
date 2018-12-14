@@ -20,7 +20,17 @@ interface User{
   objectId: string
   messages: any[]
   unread?: boolean
+  lastMessage: string
   conversation?: ConversationBase
+}
+type messageType = 'text' | 'image'
+interface PushMessage {
+  timestamp: string | Date | number
+  message: {
+    content: string
+    type: messageType
+    width?: number
+    height?: number}
 }
 class IMStore {
     id: string = ''
@@ -57,13 +67,26 @@ class IMStore {
     public bindPushEvnet(event: Function) {
       this.pushEvent = event
     }
-    public async sendMedia(file: File) {
+    public async sendMedia(file: File, type: messageType = 'image') {
       try {
         const handle = await new AV.File(file.name, file).save()
-        this.send(`<img src="${handle.url()}" class="picture">`)
+        if (type === 'image') {
+          this.getImageSize(file).then(img => {
+            console.log(img.width, img.height)
+            this.pushMessage(this.currentUser!, {message: {type: 'image', content: img.src, width: img.width, height: img.height}, timestamp: Date.now()})            
+          })
+        }
+        this.send(handle.url(), type)
       } catch(err) {
         console.error('pictureMessage Error', err.message)
       }
+    }
+    public async sendText(message: string) {
+      this.pushMessage(this.currentUser!, {message: {
+        type: 'text',
+        content: message
+      }, timestamp: new Date}, this.user.objectId)
+      this.send(message, 'text')
     }
     public async client(id: string) {
       this.id = id
@@ -79,13 +102,12 @@ class IMStore {
       this.listenService()
     }
     @action.bound
-    public async send(message: string) {
+    public async send(message: string, type: messageType = 'text') {
       const currentUser = this.currentUser!
       if (!currentUser.conversation) {
         currentUser.conversation = await this.$im.createConversation(currentUser.objectId, this.user.objectId)
       }
-      this.pushMessage(currentUser, {message, timestamp: new Date}, this.user.objectId)
-      return currentUser.conversation.send(new TextMessage(message))
+      return currentUser.conversation.send(new TextMessage(JSON.stringify({content: message, type})))
     }
     @action.bound 
     public setIndex(index: number) {
@@ -114,8 +136,42 @@ class IMStore {
       this.im.on(Event.MESSAGE, (message, conversation) => {
         const res = message!.toJSON() as RealtimeResponse
         const sender = this.userList.find(u => u.objectId === res.from) as User;
-        // 保留发送者与用户的会话
-        this.pushMessage(sender, {message: res.text, timestamp: res.timestamp})
+        const {type, content} = JSON.parse(res.text)
+        console.log(type, content)
+        if (type === 'image') {
+          this.getImageSize(content).then(img => {
+            this.pushMessage(sender, {message: {
+              type: 'image',
+              content: content,
+              width: img.width,
+              height: img.height
+            }, timestamp: res.timestamp})            
+          })
+        }
+        if (type === 'text') {
+          this.pushMessage(sender, {message: {
+            type: 'text',
+            content: content
+          }, timestamp: res.timestamp})
+        }
+      })
+    }
+    getImageSize(url: string | File): Promise<HTMLImageElement> {
+      return new Promise((resolve) => {
+        const img = document.createElement('img')
+        if (typeof url === 'string') {
+          img.src = url
+          img.onload = () => {
+            resolve(img)
+          }
+        } else {
+          const fr = new FileReader();
+          fr.onload = function (e: any) {
+            img.src = e.target.result
+            img.onload = () => resolve(img)
+          }
+          fr.readAsDataURL(url)
+        }
       })
     }
     // 监听群聊用于同步在线用户
@@ -134,27 +190,31 @@ class IMStore {
     }
     // 加入用户消息队列
     @action.bound 
-    private pushMessage(sender: User, res: {timestamp: string | Date, message: string}, userid?: string) {
-        const start = new Date()
-        const current = new Date(res.timestamp)
-        let datestr = ''
-        if (start.valueOf() - current.valueOf() > 24 * 60 * 1000) {
-          datestr = dayjs(current).format('YY/MM/DD')
-        } else {
-          datestr = dayjs(current).format('HH:mm')
-        }
-        sender.messages.push({
-          objectId: userid || sender.objectId,
-          id: sender.messages.length + 1,
-          message: res.message,
-          date: datestr,
-          timestamp: current.valueOf()
-        })
-        // 虚拟滚动组件强制更新
-        sender.messages = sender.messages.slice()
-        if (userid || sender.objectId === this.currentUser!.objectId) {
-          this.pushEvent()
-        }
+    private pushMessage(sender: User, res: PushMessage, userid?: string) {
+      const start = new Date()
+      const current = new Date(res.timestamp)
+      let datestr = ''
+      if (start.valueOf() - current.valueOf() > 24 * 60 * 1000) {
+        datestr = dayjs(current).format('YY/MM/DD')
+      } else {
+        datestr = dayjs(current).format('HH:mm')
+      }
+      sender.messages.push({
+        objectId: userid || sender.objectId,
+        id: sender.messages.length + 1,
+        content: res.message,
+        date: datestr,
+        timestamp: current.valueOf()
+      })
+      if (res.message.type === 'text') {
+        sender.lastMessage = res.message.content
+      }
+      // 虚拟滚动组件强制更新
+      sender.messages = sender.messages.slice()
+      // console.log(sender.messages)
+      if (this.currentUser && (userid || sender.objectId === this.currentUser!.objectId)) {
+        this.pushEvent()
+      }
         // if (currentUser.objectId !== sender.objectId) {
         //   sender.unread = true
         //   this.userSort()
@@ -181,6 +241,7 @@ class IMStore {
         }
         user.messages = []
         user.conversation = null
+        user.lastMessage = ''
         return user
       })
       this.userList = users.filter(u => {

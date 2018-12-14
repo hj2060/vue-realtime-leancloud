@@ -17,21 +17,21 @@
         <DynamicScrollerItem
           :item="item"
           :active="active"
-          :size-dependencies="[
-            item.message
-          ]"
+          :watchData="true"
           :data-index="index"
         >
           <div class="md-message me" v-if="item.objectId === $im.user.objectId">
             <div class="info">
-              <span class="text" v-html="item.message"></span>
+              <!-- <span class="text" v-if="item.type === 'message'">{{item.content}}</span> -->
+              <MessageTemplate :item="item"></MessageTemplate>
             </div>
             <img class="avatar" :src="$im.user.avatar" alt="">
           </div>
           <div class="md-message other" v-else>
             <img class="avatar" :src="$im.currentUser.avatar" alt="">
-            <div class="info">
-              <span class="text" v-html="item.message"></span>
+            <div class="info">      
+              <MessageTemplate :item="item"></MessageTemplate>
+              <!-- <span class="text" v-html="item.message"></span> -->
             </div>
           </div>
         </DynamicScrollerItem>
@@ -75,7 +75,7 @@
   </div>
 </template>
 
-<script lang="ts">
+<script lang="tsx">
 import Emoji from './emoji.vue'
 import { Component, Vue, Prop, Watch } from 'vue-property-decorator'
 import {Observer} from 'mobx-vue'
@@ -83,7 +83,19 @@ import IM from './im-store'
 @Observer
 @Component({
   components: {
-    Emoji
+    Emoji,
+    MessageTemplate: {
+      functional: true,
+      render(h: any, ctx: any) {
+        const item = ctx.props.item
+        switch(item.content.type) {
+          case 'image':
+            return <img src={item.content.content} alt="" class="picture" width={item.content.width} height={item.content.height}/>
+          default:
+          return <span class="text">{item.content.content}</span>
+        }
+      }
+    }
   }
 })
 export default class Home extends Vue {
@@ -153,7 +165,7 @@ export default class Home extends Vue {
     //   return `[${res![1]}]`
     // })
     this.clear();
-    this.$im.send(message)
+    this.$im.sendText(message)
   }
   pictureMessage(e: Event) {
     const file = e.target as any;
