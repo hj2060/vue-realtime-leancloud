@@ -93,7 +93,7 @@ export default class List extends Vue {
   padding:0 30px;
 }
 .user-lists{
-  height:calc(100% - 60px);
+  height:calc(100% - 170px);
   overflow-y: auto;
   .item{
     .bage{

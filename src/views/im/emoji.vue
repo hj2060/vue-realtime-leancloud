@@ -6,11 +6,10 @@
       </div>
     </div>
   </transition>
-  
 </template>
 
 <script lang="ts">
-import { Component, Vue, Prop } from 'vue-property-decorator'
+import { Component, Vue, Prop, Watch } from 'vue-property-decorator'
 import emoji from './emoji.json'
 @Component
 export default class Home extends Vue {

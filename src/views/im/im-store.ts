@@ -43,12 +43,12 @@ class IMStore {
       return null
     }
     // 当前信息列表
-    @computed 
+    @computed
     get currentMessages() {
       if (this.userList.length && this.selectIndex !== null) {
         return this.userList[this.selectIndex].messages
       }
-      return {}
+      return []
     }
     public offline() {
       const user = AV.Object.createWithoutData('online', this.id)
@@ -56,6 +56,14 @@ class IMStore {
     }
     public bindPushEvnet(event: Function) {
       this.pushEvent = event
+    }
+    public async sendMedia(file: File) {
+      try {
+        const handle = await new AV.File(file.name, file).save()
+        this.send(`<img src="${handle.url()}" class="picture">`)
+      } catch(err) {
+        console.error('pictureMessage Error', err.message)
+      }
     }
     public async client(id: string) {
       this.id = id
@@ -66,7 +74,7 @@ class IMStore {
       } catch (err) {
         console.log(err)
       }
-      this.subscribe()
+      this.usersInit()
       this.listenMessage()
       this.listenService()
     }
@@ -142,7 +150,8 @@ class IMStore {
           date: datestr,
           timestamp: current.valueOf()
         })
-        const currentUser = this.currentUser as User
+        // 虚拟滚动组件强制更新
+        sender.messages = sender.messages.slice()
         if (userid || sender.objectId === this.currentUser!.objectId) {
           this.pushEvent()
         }
@@ -162,7 +171,7 @@ class IMStore {
       //   return timestamp1 > timestamp2 ? -1 : 1
       // })
     }
-    @action.bound private async subscribe() {
+    @action.bound private async usersInit() {
       // 查找在在线用户
       const query = new AV.Query('online')
       const users = (await query.equalTo('online', true).find()).map(u => {

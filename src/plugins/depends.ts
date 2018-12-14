@@ -1,7 +1,7 @@
 import Icon from '@/components/icon/index.vue'
 import icons from '@/svg/output.json'
 import ElementUI from 'element-ui';
-// import VueVirtualScroller from 'vue-virtual-scroller';
+import VueVirtualScroller from 'vue-virtual-scroller';
 import api from '../api/index'
 import 'element-ui/lib/theme-chalk/index.css';
 import '../scss/common.scss';
@@ -15,6 +15,6 @@ AV.init({
 export default (Vue: any) => {
   Vue.prototype.$api = api
   Vue.component('Icon', Icon)
-  // Vue.use(VueVirtualScroller)
+  Vue.use(VueVirtualScroller)
   Vue.use(ElementUI);
 }

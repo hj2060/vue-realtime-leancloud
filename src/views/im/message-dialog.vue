@@ -6,7 +6,38 @@
       <span class="icon"></span>
     </header>
     <span class="nomore" v-if="!$im.currentUser">未选择对话</span>
-    <div class="message-list" ref="list">
+    <DynamicScroller
+      :items="$im.currentMessages"
+      v-show="$im.currentUser"
+      :min-item-height="60"
+      class="message-list"
+      ref="scroll"
+    >
+      <template slot-scope="{ item, index, active }">
+        <DynamicScrollerItem
+          :item="item"
+          :active="active"
+          :size-dependencies="[
+            item.message
+          ]"
+          :data-index="index"
+        >
+          <div class="md-message me" v-if="item.objectId === $im.user.objectId">
+            <div class="info">
+              <span class="text" v-html="item.message"></span>
+            </div>
+            <img class="avatar" :src="$im.user.avatar" alt="">
+          </div>
+          <div class="md-message other" v-else>
+            <img class="avatar" :src="$im.currentUser.avatar" alt="">
+            <div class="info">
+              <span class="text" v-html="item.message"></span>
+            </div>
+          </div>
+        </DynamicScrollerItem>
+      </template>
+    </DynamicScroller>
+    <!-- <div class="message-list" ref="list">
       <div>
         <div class="md-message me" v-if="item.objectId === $im.user.objectId" v-for="item in $im.currentMessages" :key="item.id">
           <div class="info">
@@ -21,42 +52,23 @@
           </div>
         </div>
       </div>
-    </div>
-    <!-- <div class="message-list">
-      <span class="nomore">暂时没有更多消息</span>
-      <div class="message other" v-for="n in 2">
-        <img class="avatar" src="https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxgeticon?seq=677838611&username=@bd8b0fef612a56a24667f7140aaa61c1&skey=@crypt_c319d90c_e55d04993c14127254af11f989fdae53" alt="">
-        <div class="info">
-          <span class="text">
-            我来啦水电费吉计算两点缴费来得及法律<img class="input-emoji" src="https://wx.qq.com/zh_CN/htmledition/v2/images/spacer.gif"></img>酸辣粉机水立方
-          </span>
-        </div>
-      </div>
-      <div class="message me" v-for="n in 2">
-        <div class="info">
-          <span class="text">
-            我来啦水电费吉计算两点缴费来得及法律<img class="input-emoji" src="https://wx.qq.com/zh_CN/htmledition/v2/images/spacer.gif"></img>酸辣粉机水立方
-          </span>
-        </div>
-        <img class="avatar" src="https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxgeticon?seq=633027519&username=@037165b685419f2069ffcefce78261757503237e8e69a607570cafbe882a0798&skey=@crypt_c319d90c_0a2a2fba7c46e13e9f8b0cd1b5b79778" alt="">
-      </div>
-    </div>-->
-    <div class="input-panel" v-if="$im.currentUser">
+    </div> -->
+    <div class="input-panel" v-show="$im.currentUser">
       <div class="tool-list">
         <div>
           <Icon name="emoji" :size="25" @click="openEmoji = true"></Icon>
           <Emoji @select="selectEmoji" :show.sync="openEmoji"></Emoji>
         </div>
         <div>
-          <input type="file" name="picture"/>
+          <input type="file" name="picture" @change="pictureMessage"/>
           <Icon name="picture" :size="22"></Icon>
         </div>
       </div>
       <div>
-        <div class="md-input" contenteditable="true" v-html="msg" @keydown.enter="enter" ref="message" @blur="editBlur"></div>
+        <div class="md-input" contenteditable="true" v-html="msg" @keydown.enter="enter" ref="message" @blur="editBlur" mutiple></div>
       </div>
       <div class="md-footer">
-        <span>按下Cmd+Enter换行</span>
+        <span>按下Shift+Enter换行</span>
         <button>发送</button>
       </div>
     </div>
@@ -143,16 +155,22 @@ export default class Home extends Vue {
     this.clear();
     this.$im.send(message)
   }
+  pictureMessage(e: Event) {
+    const file = e.target as any;
+    [].forEach.call(file.files, (file: File) => {
+      this.$im.sendMedia(file)
+    })
+  }
   mounted() {
-    // firefox
     this.$im.bindPushEvnet(() => {
-      const list = (this.$refs.list as HTMLElement)
+      const list = ((this.$refs.scroll as any).$el as HTMLElement)
       if (list.children.length) {
         setTimeout(() => {
           list.scrollTop = list.children[0].clientHeight          
         })
       }
     })
+    // firefox
     document.execCommand('defaultParagraphSeparator', false, 'br')
   }
 }

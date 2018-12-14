@@ -62,5 +62,6 @@ export default class ImIndex extends Vue {
   width: 1000px;
   margin:auto;
   height:calc(100vh - 90px);
+  box-shadow: 1px 1px 10px 0 rgba(0, 0, 0, .1);
 }
 </style>

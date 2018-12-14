@@ -1,4 +1,4 @@
-import {Realtime, IMClient, Event, ConversationBase, TextMessage } from 'leancloud-realtime'
+import {Realtime, IMClient} from 'leancloud-realtime'
 export default class IM {
   realtime = new Realtime({
     appId: process.env.VUE_APP_APPID,

@@ -77,6 +77,9 @@ input[name=picture]{
   overflow-y: auto;
   // display: flex;
   // flex-direction: column;
+  .picture{
+    max-width:500px;
+  }
 }
 .message-panel .nomore{
   padding-top: 150px;
